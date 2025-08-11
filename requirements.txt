@@ -4,5 +4,5 @@ numpy==1.26.4
 requests>=2.31.0
 plotly==5.23.0
 fastapi==0.112.0
-uvicorn[standard]==0.30.5
+uvicorn==0.30.5           # NOTE: no [standard] extras (drops uvloop/httptools builds)
 python-dotenv==1.0.1
