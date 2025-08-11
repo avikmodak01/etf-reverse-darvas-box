@@ -3,49 +3,6 @@ services:
     name: reverse-darvas-app
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_KEY
-        sync: false
-      - key: SUPABASE_TABLE
-        value: holdings
-
-cronJobs:
-  - name: reverse-darvas-weekly
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python cron_job.py
-    schedule: "30 4 * * SAT"   # 10:00 IST every Saturday
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: ETF_LIST
-        value: ITBEES,JUNIORBEES,MIDCAPETF,SMALLCAP,INFRABEES,PSUBNKBEES,NIFTYBEES,GOLDBEES,SILVERBEES,MON100,HNGSNGBEES,MODEFENCE,METALIETF,MID150CASE,OILIETF,MOSMALL250,LOWVOLIETF,PHARMABEES,ALPL30IETF,PVTBANIETF,MOM30IETF,MOCAPITAL,MIDSMALL
-      - key: BUY_OFFSET_ABS
-        value: "0.10"
-      - key: TP_PCT
-        value: "6.28"
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: TELEGRAM_CHAT_ID
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_KEY
-        sync: false
-      - key: SUPABASE_TABLE
-        value: holdings
-services:
-  - type: web
-    name: reverse-darvas-app
-    env: python
-    plan: free
     buildCommand: pip install --upgrade pip setuptools wheel && pip install --no-cache-dir -r requirements.txt
     startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
     envVars:
@@ -55,41 +12,77 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
-      - key: SUPABASE_TABLE
+      - key: SUPABASE_PRICES_TABLE
+        value: etf_prices
+      - key: SUPABASE_HOLDINGS_TABLE
         value: holdings
+      - key: SUPABASE_TRADES_TABLE
+        value: trades
 
   - type: web
     name: reverse-darvas-bot
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install --no-cache-dir -r requirements.txt
     startCommand: uvicorn bot_server:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: TELEGRAM_BOT_TOKEN
         sync: false
-      - key: TELEGRAM_ALLOWED_CHATS     # optional, comma-separated chat IDs
+      - key: TELEGRAM_ALLOWED_CHATS
         sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_KEY
         sync: false
-      - key: SUPABASE_TABLE
+      - key: SUPABASE_PRICES_TABLE
+        value: etf_prices
+      - key: SUPABASE_HOLDINGS_TABLE
         value: holdings
+      - key: SUPABASE_TRADES_TABLE
+        value: trades
+      - key: BUY_OFFSET_ABS
+        value: "0.10"
+      - key: TP_PCT
+        value: "6.28"
 
 cronJobs:
-  - name: reverse-darvas-weekly
+  - name: etf-daily-ingest
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python cron_job.py
-    schedule: "30 4 * * SAT"   # 10:00 IST every Saturday
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install --no-cache-dir -r requirements.txt
+    startCommand: python ingest_etf_prices.py --yesterday --all-etfs
+    schedule: "15 13 * * MON-FRI"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
-      - key: ETF_LIST
-        value: ITBEES,JUNIORBEES,MIDCAPETF,SMALLCAP,INFRABEES,PSUBNKBEES,NIFTYBEES,GOLDBEES,SILVERBEES,MON100,HNGSNGBEES,MODEFENCE,METALIETF,MID150CASE,OILIETF,MOSMALL250,LOWVOLIETF,PHARMABEES,ALPL30IETF,PVTBANIETF,MOM30IETF,MOCAPITAL,MIDSMALL
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_PRICES_TABLE
+        value: etf_prices
+      - key: SUPABASE_SYMBOLS_TABLE
+        value: etf_symbols
+
+  - name: reverse-darvas-weekly
+    env: python
+    plan: free
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install --no-cache-dir -r requirements.txt
+    startCommand: python cron_job.py
+    schedule: "30 4 * * SAT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_PRICES_TABLE
+        value: etf_prices
+      - key: SUPABASE_HOLDINGS_TABLE
+        value: holdings
       - key: BUY_OFFSET_ABS
         value: "0.10"
       - key: TP_PCT
@@ -98,9 +91,3 @@ cronJobs:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_KEY
-        sync: false
-      - key: SUPABASE_TABLE
-        value: holdings
